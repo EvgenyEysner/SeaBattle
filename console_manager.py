@@ -1,13 +1,10 @@
 import os
 
-from constants import *
+from battle import *
 
 
-def press_enter(message=None, action="...."):
-    message_press_enter = f"Нажмите Enter для {action}... "
-
-    if message is not None:
-        message_press_enter = f"{message} {message_press_enter}"
+def press_enter(action="...."):
+    message_press_enter = f"Нажмите Enter для продолжения {action}"
 
     input(message_press_enter)
 
@@ -22,7 +19,7 @@ def clear():
 
 
 def raise_wrong_hit_status(hit_status, x=None, y=None, details=None):
-    message = 'Неправильный статус попадания ({}).'
+    message = 'Неправильный статус попадания.'
     message = message.format(hit_status)
 
     if x is not None and y is not None:
@@ -46,7 +43,7 @@ def request_input(heading, choices):
         snipped = f"\n {number + 1}. {choice}"
         message += snipped
 
-    message += '\n\nВыберите действие и нажмите Enter'
+    message += '\n\nВыберите действие и нажмите Enter: '
 
     input_value = input(message)
     input_value = validate_input(input_value, len(choices))
@@ -86,8 +83,8 @@ def validate_input_coordinate(value, board_size):
 
     if value is Console.wrong_input:
         return Console.wrong_input
-    elif 0 <= value < board_size:
+    if 0 <= value <= board_size:
         return value
     else:
-        print('Ошибка! Попробуйте ещё раз!')
+        'Ошибка, введите число oт 1-10'
         return Console.wrong_input

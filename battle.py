@@ -84,8 +84,8 @@ class Board:
                 Ship(self, ship_size)
 
     def check_ship_hit(self, x, y):  # проверяю статус корабля
-        hit_status = Cell.empty_cell  # для начала присваиваю "неизвестный"
-        cell = self.rows[x][y]  # клетка состоит из координат x,y
+        hit_status = None  # для начала присваиваю "неизвестный"
+        cell = self.rows[y][x]  # клетка состоит из координат x,y
 
         if cell is Cell.empty_cell:
             hit_status = Cell.miss_cell  # если эта клетка была пустой, меняем статус на промах
@@ -96,10 +96,11 @@ class Board:
                 ship_hit_status = ship.check_is_hit(x, y)  # вызываем функцию "попадания"
                 if ship_hit_status is not Cell.miss_cell:
                     hit_status = ship_hit_status  # присваиваем соответсвующий статус
+                    break
 
         if hit_status is Cell.miss_cell:
-            self.rows[x][y] = Cell.miss_cell
-        if hit_status is Cell.destroyed_ship:  # если корабль потоплен вызываем функцию update_status()
+            self.rows[y][x] = Cell.miss_cell
+        elif hit_status is Cell.destroyed_ship:  # если корабль потоплен вызываем функцию update_status()
             self.update_status()  # вносим изменения
 
         return hit_status
@@ -426,7 +427,7 @@ class AI(object):
         while is_guessing:
             x_hit = random.randrange(Board.size)
             y_hit = random.randrange(Board.size)
-            cell = Board.board_player.rows[y_hit][x_hit]
+            cell = Board.board_player.rows[x_hit][y_hit]
             if cell is Cell.ship_unit or cell is Cell.empty_cell:
                 is_guessing = False
 
@@ -491,29 +492,29 @@ def game():
     while is_player_turn:
         Board.print_boards()
 
-        hit_y, hit_x = input('Коордитаты Х: '), input('Коордитаты Y: ')
+        hit_x, hit_y = input('Коордитаты Х: '), input('Коордитаты Y: ')
 
         hit_x = console_manager.validate_input_coordinate(hit_x, Board.size)
         hit_y = console_manager.validate_input_coordinate(hit_y, Board.size)
 
-        if hit_x is Console.wrong_input or hit_y is Console.wrong_input:
-            console_manager.press_enter()
+#        if hit_x is Console.wrong_input or hit_y is Console.wrong_input:
+#            console_manager.press_enter()
 
         hit_status = Board.board_ai.check_ship_hit(hit_x, hit_y)
 
         if hit_status is Cell.miss_cell:
             is_player_turn = False
             message = 'Ты промахнулся'
-            continue
+
         elif hit_status is Cell.damaged_ship:
             message = 'Ты повредил вражеский корабль.'
-            continue
+
         elif hit_status is Cell.destroyed_ship:
             message = 'Ты уничтожил вражеский корабль!'
-            continue
+
         elif hit_status is Cell.miss_repeated:
             message = 'Ты уже попал в это место, попробуй ещё раз'
-            continue
+
         else:
             message = 'Ошибка хода игрока'
             console_manager.raise_wrong_hit_status(hit_status, hit_x, hit_y, message)
@@ -549,7 +550,7 @@ if __name__ == "__main__":
     else:
         message = None
 
-    Board.is_monitoring = True
+#    Board.is_monitoring = True
     Board.print_boards()
 
     console_manager.press_enter(message=message, action='Выход')
