@@ -1,6 +1,6 @@
 import random
 import console_manager
-from constants import *
+from enum import Enum  # имортируем Enum константы могут иметь только тип (int), потом их можно сравнить
 
 
 Title = 'Морской бой'
@@ -12,20 +12,12 @@ Tips = '''
        '''
 
 
-class AxisDirection:
+class AxisDirection(Enum):
     x = 1
     y = 0
 
 
-class HitStatus:
-    unknown = 0
-    miss = 1
-    miss_repeated = 2
-    damaged = 3
-    destroyed = 4
-
-
-class Console:
+class Console(Enum):
     wrong_input = 0
 
 
@@ -51,7 +43,7 @@ class Cell:
     destroyed_ship = add_color('▄', Color.red)  # корабль потопленный
     empty_cell = add_color(' ', Color.background)  # пустое поле
     miss_cell = add_color('*', Color.miss)  # поле для прохама и закраски клеток вокруг корабля
-
+    miss_repeated = miss_cell
 
 OFFSETS = (-1, 0, 1)
 
@@ -92,22 +84,22 @@ class Board:
                 Ship(self, ship_size)
 
     def check_ship_hit(self, x, y):  # проверяю статус корабля
-        hit_status = HitStatus.unknown  # для начала присваиваю "неизвестный"
-        cell = self.rows[y][x]  # клетка сосьоит из координат x,y
+        hit_status = Cell.empty_cell  # для начала присваиваю "неизвестный"
+        cell = self.rows[x][y]  # клетка состоит из координат x,y
 
         if cell is Cell.empty_cell:
-            hit_status = HitStatus.miss  # если эта клетка была пустой, меняем статус на промах
+            hit_status = Cell.miss_cell  # если эта клетка была пустой, меняем статус на промах
         if cell in (Cell.miss_cell, Cell.damaged_ship, Cell.destroyed_ship):  # если ход выпадает на клетку подбитого, уничтоженного корабля или ещё раз в пустую клетку
-            hit_status = HitStatus.miss_repeated  # меняю статус на повторный промах и вывожу сообщениие, вывод дальше
+            hit_status = Cell.miss_repeated  # меняю статус на повторный промах и вывожу сообщениие, вывод дальше
         if cell is Cell.ship_unit:  # если клетка является клеткой корабля
             for ship in self.ships:  # запускаем цикл по self.ships = []
                 ship_hit_status = ship.check_is_hit(x, y)  # вызываем функцию "попадания"
-                if ship_hit_status is not HitStatus.miss:
+                if ship_hit_status is not Cell.miss_cell:
                     hit_status = ship_hit_status  # присваиваем соответсвующий статус
 
-        if hit_status is HitStatus.miss:
+        if hit_status is Cell.miss_cell:
             self.rows[x][y] = Cell.miss_cell
-        if hit_status is HitStatus.destroyed:  # если корабль потоплен вызываем функцию update_status()
+        if hit_status is Cell.destroyed_ship:  # если корабль потоплен вызываем функцию update_status()
             self.update_status()  # вносим изменения
 
         return hit_status
@@ -313,7 +305,7 @@ class Ship:
         return is_collision
 
     def check_is_hit(self, hit_x, hit_y):
-        hit_status = HitStatus.miss
+        hit_status = Cell.miss_cell
 
         if self.axis_direction is AxisDirection.x:
             a1 = self.x
@@ -329,10 +321,10 @@ class Ship:
         if b1 == b2 and a1 <= a2 < a1 + self.size:
             damaged_unit_id = a2 - a1
             self.body_status[damaged_unit_id] = False
-            hit_status = HitStatus.damaged
+            hit_status = Cell.damaged_ship
             if not any(self.body_status):
                 self.is_destroyed = True
-                hit_status = HitStatus.destroyed
+                hit_status = Cell.destroyed_ship
                 self.draw_as_destroyed()
             else:
                 self.draw_damage(hit_x, hit_y)
@@ -432,8 +424,8 @@ class AI(object):
 
         is_guessing = True
         while is_guessing:
-            y_hit = random.randrange(Board.size)
             x_hit = random.randrange(Board.size)
+            y_hit = random.randrange(Board.size)
             cell = Board.board_player.rows[y_hit][x_hit]
             if cell is Cell.ship_unit or cell is Cell.empty_cell:
                 is_guessing = False
@@ -444,15 +436,15 @@ class AI(object):
     def hit_position(self):
         hit_status = Board.board_player.check_ship_hit(self.x_hit, self.y_hit)
 
-        if hit_status is HitStatus.damaged:
+        if hit_status is Cell.damaged_ship:
             message = 'ИИ повредил ваш корабль (X: {}, Y: {}).'
-        elif hit_status is HitStatus.destroyed:
+        elif hit_status is Cell.destroyed_ship:
             message = 'ИИ уничтожил ваш корабль (X: {}, Y: {}).'
         else:
             self.is_turn = False
             message = 'ИИ промахнулся (X: {}, Y: {}).'
 
-        if hit_status is HitStatus.damaged or hit_status is HitStatus.destroyed:
+        if hit_status is Cell.damaged_ship or hit_status is Cell.destroyed_ship:
             message = f'{message} и ходит ещё раз.'
 
         self.last_message = message.format(self.x_hit, self.y_hit)
@@ -474,7 +466,7 @@ Board.board_player = Board()
 def intro():
     Board.print_boards()
 
-    message_intro = f"Добро пожалавать {Title} v{Tipps}"
+    message_intro = f"Добро пожалавать в {Title} {Tips}"
     input_value = console_manager.request_input(message_intro, (
         'Расставить корабли',
         'Игра!',
@@ -482,7 +474,7 @@ def intro():
     ))
 
     if input_value == 1:
-        Board.board_player = Board()  # Generate player board again
+        Board.board_player = Board()
     elif input_value == 2:
         global is_intro
         is_intro = False
@@ -499,8 +491,7 @@ def game():
     while is_player_turn:
         Board.print_boards()
 
-        hit_x = input('Коордитаты Х: ')
-        hit_y = input('Коордитаты Y: ')
+        hit_y, hit_x = input('Коордитаты Х: '), input('Коордитаты Y: ')
 
         hit_x = console_manager.validate_input_coordinate(hit_x, Board.size)
         hit_y = console_manager.validate_input_coordinate(hit_y, Board.size)
@@ -510,20 +501,24 @@ def game():
 
         hit_status = Board.board_ai.check_ship_hit(hit_x, hit_y)
 
-        if hit_status is HitStatus.miss:
+        if hit_status is Cell.miss_cell:
             is_player_turn = False
             message = 'Ты промахнулся'
-        elif hit_status is HitStatus.damaged:
+            continue
+        elif hit_status is Cell.damaged_ship:
             message = 'Ты повредил вражеский корабль.'
-        elif hit_status is HitStatus.destroyed:
+            continue
+        elif hit_status is Cell.destroyed_ship:
             message = 'Ты уничтожил вражеский корабль!'
-        elif hit_status is HitStatus.miss_repeated:
+            continue
+        elif hit_status is Cell.miss_repeated:
             message = 'Ты уже попал в это место, попробуй ещё раз'
+            continue
         else:
             message = 'Ошибка хода игрока'
             console_manager.raise_wrong_hit_status(hit_status, hit_x, hit_y, message)
 
-        if hit_status is HitStatus.damaged or hit_status is HitStatus.destroyed:
+        if hit_status is Cell.damaged_ship or hit_status is Cell.destroyed_ship:
             message = f'{message} и ходит ещё раз.'
 
         print(message, end=' ')
