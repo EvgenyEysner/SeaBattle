@@ -115,29 +115,13 @@ class Board:
         if alive_ships_number == 0:  # если кораблей нет, то сумма всех кораблей = 0
             self.alive_ships_number = alive_ships_number
 
-#    @classmethod
-#    def validate_size(cls):  # проверка ходов, т.к. размер 10х10
-#        size_limit_min = 10
-#        size_limit_max = 10
-## выводим сообщение если игрок вводит не верные координаты
-#        if cls.size > size_limit_max:
-#            message = 'Поле слишком большого размера {}. Максимальный предел {}.'
-#            message = message.format(cls.size, size_limit_max)
-#            raise ValueError(message)
-#        elif cls.size < size_limit_min:
-#            message = 'Поле слишком маленького размера ({}). Минимальный предел {}.'
-#            message = message.format(cls.size, size_limit_min)
-#            raise ValueError(message)
-
 # создаю поле с координатами
     @classmethod
     def print_boards(cls):
-#        letters = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
         console_manager.clear()
 
         cls.print_headings()  # название полей, кол-во кораблей
         cls.print_horizontal_numbers()  # координаты
-#        cls.print_horizontal_marks()
 
         for row_index in range(cls.size):
             # координаты слева
@@ -159,7 +143,6 @@ class Board:
                 print(cell, end=' ')
             print(row_index)
 
-#        cls.print_horizontal_marks()
         cls.print_horizontal_numbers()
         print()
 
@@ -185,19 +168,6 @@ class Board:
         print(header_ai, end=indentation)
         print(header_player, end='\n')
 
-#    @classmethod
-#    def print_horizontal_marks(cls):
-#        cls.print_offset_start()
-
-#        for n in range(cls.size):
-#            print('|', end=' ')
-
-#        cls.print_offset_center()
-
-#        for n in range(cls.size):
-#            print('|', end=' ')
-
-#        print()
 # рисуем горизонтальные координаты
     @classmethod
     def print_horizontal_numbers(cls):
@@ -225,7 +195,7 @@ class Board:
 
 class Ship:
 
-    spawn_maximum_attempts_number = 256  # used to avoid infinite spawn loop
+    spawn_maximum_attempts_number = 256
 
     def __init__(self, board, size):
         self.board = board
@@ -239,17 +209,6 @@ class Ship:
         self.generate_position()
         board.ships.append(self)
 
-#    @staticmethod
-#    def validate_size(value):
-#        if value < 1:
-#            message = 'Размер корабля должен быть больше нуля (введено: {}).'.format(value)
-#            raise ValueError(message)
-#        elif value > Board.size:
-#            message = "Ship size should be smaller than board size which is {} (got: {})."
-#            message = message.format(Board.size, value)
-#            raise ValueError(message)
-#        else:
-#            return value
 
     def generate_position(self):
         is_spawning = True
