@@ -55,7 +55,8 @@ def validate_integer(value):
         value = int(value)
     except ValueError:
         print('Ошибка, введите число!')
-        return Console.wrong_input
+    except TypeError:
+        print('Ошибка, введите число!')
     else:
         return value
 
@@ -80,11 +81,9 @@ def validate_input(value, choices_quantity):
 
 def validate_input_coordinate(value, board_size):
     value = validate_integer(value)
-
-    if value is Console.wrong_input:
+    if value is None:
         return Console.wrong_input
-    if 0 <= value <= board_size:
+    elif 0 <= value <= board_size:
         return value
     else:
-        'Ошибка, введите число oт 1-10'
         return Console.wrong_input

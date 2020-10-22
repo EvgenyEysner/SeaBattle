@@ -62,11 +62,10 @@ class Board:
 
     def __init__(self):
 #        self.validate_size()
-
         self.rows = []  # фактическое поле (ряды ячеек)
         self.ships = []  # все созданные корабли
 
-#        self.is_onside = True
+        self.is_onside = True
         self.alive_ships_number = sum([ship[0] for ship in self.ship_list])
 
         self.create_rows()
@@ -113,15 +112,33 @@ class Board:
                 alive_ships_number += 1
 
         if alive_ships_number == 0:  # если кораблей нет, то сумма всех кораблей = 0
-            self.alive_ships_number = alive_ships_number
+            self.is_onside = False
+
+        self.alive_ships_number = alive_ships_number
+
+#    @classmethod
+#    def validate_size(cls):  # проверка ходов, т.к. размер 10х10
+#        size_limit_min = 10
+#        size_limit_max = 10
+## выводим сообщение если игрок вводит не верные координаты
+#        if cls.size > size_limit_max:
+#            message = 'Поле слишком большого размера {}. Максимальный предел {}.'
+#            message = message.format(cls.size, size_limit_max)
+#            raise ValueError(message)
+#        elif cls.size < size_limit_min:
+#            message = 'Поле слишком маленького размера ({}). Минимальный предел {}.'
+#            message = message.format(cls.size, size_limit_min)
+#            raise ValueError(message)
 
 # создаю поле с координатами
     @classmethod
     def print_boards(cls):
+#        letters = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
         console_manager.clear()
 
         cls.print_headings()  # название полей, кол-во кораблей
         cls.print_horizontal_numbers()  # координаты
+#        cls.print_horizontal_marks()
 
         for row_index in range(cls.size):
             # координаты слева
@@ -143,6 +160,7 @@ class Board:
                 print(cell, end=' ')
             print(row_index)
 
+#        cls.print_horizontal_marks()
         cls.print_horizontal_numbers()
         print()
 
@@ -168,6 +186,19 @@ class Board:
         print(header_ai, end=indentation)
         print(header_player, end='\n')
 
+#    @classmethod
+#    def print_horizontal_marks(cls):
+#        cls.print_offset_start()
+
+#        for n in range(cls.size):
+#            print('|', end=' ')
+
+#        cls.print_offset_center()
+
+#        for n in range(cls.size):
+#            print('|', end=' ')
+
+#        print()
 # рисуем горизонтальные координаты
     @classmethod
     def print_horizontal_numbers(cls):
@@ -195,7 +226,7 @@ class Board:
 
 class Ship:
 
-    spawn_maximum_attempts_number = 256
+    spawn_maximum_attempts_number = 256  # used to avoid infinite spawn loop
 
     def __init__(self, board, size):
         self.board = board
@@ -209,6 +240,17 @@ class Ship:
         self.generate_position()
         board.ships.append(self)
 
+#    @staticmethod
+#    def validate_size(value):
+#        if value < 1:
+#            message = 'Размер корабля должен быть больше нуля (введено: {}).'.format(value)
+#            raise ValueError(message)
+#        elif value > Board.size:
+#            message = "Ship size should be smaller than board size which is {} (got: {})."
+#            message = message.format(Board.size, value)
+#            raise ValueError(message)
+#        else:
+#            return value
 
     def generate_position(self):
         is_spawning = True
@@ -324,7 +366,7 @@ class Ship:
         self.board.rows[y][x] = Cell.damaged_ship
 
 
-class AI(object):
+class AI:
 
     is_super_ai = False  # для отладки
 
@@ -428,9 +470,9 @@ def intro():
 
     message_intro = f"Добро пожалавать в {Title} {Tips}"
     input_value = console_manager.request_input(message_intro, (
-        'Расставить корабли',
+        'Расставить корабли', # потом
         'Игра!',
-        'Описание',
+        'Описание', # потом
     ))
 
     if input_value == 1:
@@ -456,7 +498,7 @@ def game():
         hit_x = console_manager.validate_input_coordinate(hit_x, Board.size)
         hit_y = console_manager.validate_input_coordinate(hit_y, Board.size)
 
-#        if hit_x is Console.wrong_input or hit_y is Console.wrong_input:
+#        if hit_x is None or hit_y is None:
 #            console_manager.press_enter()
 
         hit_status = Board.board_ai.check_ship_hit(hit_x, hit_y)
@@ -484,15 +526,9 @@ def game():
         print(message, end=' ')
         console_manager.press_enter()
 
-        if not Board.board_ai:
-            is_player_turn = False
-            is_game = False
-            return
-
     ai.make_turn()
 
-    if not Board.board_player:
-        is_game = False
+
 
 
 if __name__ == "__main__":
@@ -502,12 +538,14 @@ if __name__ == "__main__":
     while is_game:
         game()
 
-    if not Board.board_ai:
+    if not Board.board_ai.is_onside:
+        is_player_turn = False
+        is_game = False
         message = 'Ты победил! Ты уничтожил все вражеские корабли!'
-    elif not Board.board_player:
+    elif not Board.board_player.is_onside:
+        is_game = False
         message = 'Ты потерпел поражение. Все корабли уничтожены!'
-    else:
-        message = None
+
 
 #    Board.is_monitoring = True
     Board.print_boards()
